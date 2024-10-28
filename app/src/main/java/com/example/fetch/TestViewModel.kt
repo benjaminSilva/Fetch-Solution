@@ -27,7 +27,7 @@ class TestViewModel : ViewModel() {
         if (response.isSuccessful) {
             val type = object : TypeToken<List<FetchData>>() {}.type
             val gsonResult = Gson().fromJson<List<FetchData>>(response.body?.string(), type)
-            _data.emit(sortedData(gsonResult))
+            _data.emit(sortedDataButOptimized(gsonResult))
         }
     }
 
@@ -38,4 +38,19 @@ class TestViewModel : ViewModel() {
                 addAll(listById.value.sortedBy { it.id })
             }
         }.toList()
+
+    //A bit more complicated to understand, but definitely with less loops
+    private fun sortedDataButOptimized(data: List<FetchData>) =
+        mutableListOf<FetchData>().apply {
+            val map = mutableMapOf<Int, FetchData>()
+            data.forEach {
+                if (it.name.isNullOrEmpty())
+                    return@forEach
+                map[(1000*it.listId) + it.id] = it
+            }
+            map.toSortedMap().forEach {
+                add(it.value)
+            }
+        }
+
 }
